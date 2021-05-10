@@ -106,7 +106,7 @@
                         <label class="col-form-label" for="new_customer_id">{{__('用戶')}}</label>
                         <select name="new_customer_id" id="new_customer_id" class="form-control">
                             @foreach($customers as $key => $value)
-                                <option value="{{$key}}"> {{$value}}</option>
+                                <option value="{{$key}}"> {{$value -> name}}</option>
                             @endforeach
                         </select>
                     </div>
