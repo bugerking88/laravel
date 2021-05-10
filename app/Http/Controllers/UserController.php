@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
@@ -104,5 +105,15 @@ class UserController extends Controller
         $users = DB::select('select * from users ');
 
         return view('users.index', ['users' => $users]);
+    }
+
+    public function changePassword(Request $request)
+    {
+        $id = Auth::id();
+        DB::update('update users set `password` = ?
+                where id = ?',
+            [Hash::make($request['password']), $id]);
+
+        return view('home');
     }
 }

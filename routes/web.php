@@ -26,7 +26,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::post('all-licenses', 'App\Http\Controllers\LicenseController@getData')->name('all_licenses');
 
     Route::get('lang/{locale}', 'App\Http\Controllers\LocalizationController@index');
-    Route::post('/change-password', 'UserController@changePassword')->name('change_password');
+    Route::post('/change-password', 'App\Http\Controllers\UserController@changePassword')->name('change_password');
     Route::get('/generate-license/{id}', 'LicenseController@generateLicense')->name('generate_license');
     Route::post('/identity-upload/{id}', 'LicenseController@identityUpload')->name('identity_upload');
 });
