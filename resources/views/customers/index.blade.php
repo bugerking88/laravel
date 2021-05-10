@@ -20,39 +20,39 @@
         <div class="card-header py-3">
             <h6 class="m-0 font-weight-bold text-primary">{{__('customers')}}</h6>
         </div>
-{{--        <div class="card-body">--}}
-{{--            <div class="table-responsive">--}}
-{{--            <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">--}}
-{{--                <thead>--}}
-{{--                    <tr>--}}
-{{--                        <th>{{__('id')}}</th>--}}
-{{--                        <th>{{__('customer name')}}</th>--}}
-{{--                        <th>{{__('phone number')}}</th>--}}
-{{--                        <th>{{__('email')}}</th>--}}
-{{--                        <th>{{__('actions')}}</th>--}}
-{{--                    </tr>--}}
-{{--                </thead>--}}
-{{--                <tbody>--}}
-{{--                    @foreach($customers as $key => $value)--}}
-{{--                        <tr class="data-row">--}}
-{{--                            <td>{{$value['id']}}</td>--}}
-{{--                            <td class="name">{{$value['name']}}</td>--}}
-{{--                            <td class="phone-number">{{$value['phone_number']}}</td>--}}
-{{--                            <td class="email">{{$value['email']}}</td>--}}
-{{--                            <td class="action-col">--}}
-{{--                                <input type="button" class="page-btn btn-primary" id="edit-item" value="{{__('edit')}}" data-item-id ="{{$value['id']}}">--}}
-{{--                                <form method="post" action="{{route('customers.destroy',$value['id'])}}" class="action-form">--}}
-{{--                                    {{ csrf_field() }}--}}
-{{--                                    {{ method_field('delete') }}--}}
-{{--                                    <input type="submit" class="page-btn btn-danger delete" value ="{{__('delete')}}">--}}
-{{--                                </form>--}}
-{{--                            </td>--}}
-{{--                        </tr>--}}
-{{--                    @endforeach--}}
-{{--                </tbody>--}}
-{{--            </table>--}}
-{{--            </div>--}}
-{{--        </div>--}}
+        <div class="card-body">
+            <div class="table-responsive">
+            <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                <thead>
+                    <tr>
+                        <th>{{__('id')}}</th>
+                        <th>{{__('customer name')}}</th>
+                        <th>{{__('phone number')}}</th>
+                        <th>{{__('email')}}</th>
+                        <th>{{__('actions')}}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($customers as $value)
+                        <tr class="data-row">
+                            <td>{{$value -> id}}</td>
+                            <td class="name">{{$value -> name}}</td>
+                            <td class="phone-number">{{$value -> phone_number}}</td>
+                            <td class="email">{{$value -> email}}</td>
+                            <td class="action-col">
+                                <input type="button" class="page-btn btn-primary" id="edit-item" value="{{__('edit')}}" data-item-id ="{{$value -> id}}">
+                                <form method="post" action="{{route('customers.destroy',$value -> id)}}" class="action-form">
+                                    {{ csrf_field() }}
+                                    {{ method_field('delete') }}
+                                    <input type="submit" class="page-btn btn-danger delete" value ="{{__('delete')}}">
+                                </form>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+            </div>
+        </div>
     </div>
 </div>
 <div class="modal fade" id="edit-modal" tabindex="-1" role="dialog" aria-labelledby="edit-modal-label" aria-hidden="true">

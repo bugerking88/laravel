@@ -83,17 +83,26 @@ class UserController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        DB::update('update users set `name` = ? , `email` = ?, `phone_number` = ?
+                where id = ?',
+            [$request['name'],$request['email'],$request['phone_number'], $id]);
+        $users = DB::select('select * from users ');
+
+        return view('users.index', ['users' => $users]);
     }
 
     /**
      * Remove the specified resource from storage.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View|\Illuminate\Http\Response
      */
     public function destroy($id)
     {
-        //
+        DB::delete('delete from users where id = ?'
+            , [$id]);
+        $users = DB::select('select * from users ');
+
+        return view('users.index', ['users' => $users]);
     }
 }
