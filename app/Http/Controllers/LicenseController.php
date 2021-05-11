@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use DB;
+use phpDocumentor\Reflection\Types\Void_;
 
 class LicenseController extends Controller
 {
@@ -71,7 +72,11 @@ class LicenseController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        DB::update('update licenses set `status` = ?
+                where id = ?',
+            [$request['status'], $id]);
+
+        return null;
     }
 
     /**
@@ -149,6 +154,12 @@ class LicenseController extends Controller
             } else {
                 $state = "停用";
             }
+
+            $check = "";
+            if ($li->status == "enabled"){
+                $check = "checked";
+            }
+
             $url = env('APP_URL', '');
             $o = (object)[
                 'id' => $li->id,
@@ -160,8 +171,8 @@ class LicenseController extends Controller
                 'linux_info' => $li->linux_info,
                 'last_validate' => $li->last_validate,
                 'last_validate_ip' => $li->last_validate_ip,
-                'actions' => "<input type=\"checkbox\" checked
-                                data-toggle=\"toggle\" data-on=\"啟用\" data-off=\"停用\"
+                'actions' => "<input type=\"checkbox\" $check
+                                data-toggle=off data-on=\"啟用\" data-off=\"停用\"
                                 data-onstyle=\"danger\" data-offstyle=\"secondary\"
                                 onchange =\"changeStatus($li->id,this)\" class=\"change-status btn-switch\" >
                                 <input type=\"button\" class=\"page-btn btn-success\" id=\"btnUpload\" value=\"上傳\"
