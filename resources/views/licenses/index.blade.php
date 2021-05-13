@@ -5,6 +5,13 @@
 <link href="{{ asset('css/bootstrap4-toggle.min.css') }}" rel="stylesheet">
 <link href="{{ asset('css/jquery.toast.min.css') }}" rel="stylesheet">
 @endpush
+<script>
+    var msg = '{{Session::get('alert')}}';
+    var exist = '{{Session::has('alert')}}';
+    if(exist){
+        alert(msg);
+    }
+</script>
 <div class="container-fluid">
     @if($errors->any())
         <div class="alert alert-danger" role="alert">

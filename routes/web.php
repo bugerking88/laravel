@@ -27,8 +27,8 @@ Route::group(['middleware' => ['auth']], function () {
 
     Route::get('lang/{locale}', 'App\Http\Controllers\LocalizationController@index');
     Route::post('/change-password', 'App\Http\Controllers\UserController@changePassword')->name('change_password');
-    Route::get('/generate-license/{id}', 'LicenseController@generateLicense')->name('generate_license');
-    Route::post('/identity-upload/{id}', 'LicenseController@identityUpload')->name('identity_upload');
+    Route::get('/generate-license/{id}', 'App\Http\Controllers\LicenseController@generateLicense')->name('generate_license');
+    Route::post('/identity-upload/{id}', 'App\Http\Controllers\LicenseController@identityUpload')->name('identity_upload');
 });
 
 //Auth::routes();
