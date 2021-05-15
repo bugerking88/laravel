@@ -11,7 +11,6 @@ use Illuminate\Http\Request;
 use DB;
 use Illuminate\Support\Facades\Auth;
 use Storage;
-use App\Tools\Rsa;
 
 class LicenseController extends Controller
 {
@@ -51,16 +50,16 @@ class LicenseController extends Controller
     {
         $customers = DB::select('select * from customers where id = ?', [$request['new_customer_id']]);
 
-        if ($customers == null || $customers == "" ) return redirect()->back() ->with('alert', 'new_customer_id error!!');
+        if ($customers == null || $customers == "") return redirect()->back()->with('alert', 'new_customer_id error!!');
         DB::insert('insert into licenses (customer_id, agent, expire_date, created_user_id, last_updated_user_id,
                         linux_info, mac_address, linux_date, last_validate, last_validate_ip, created_at, updated_at)
                         values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
             , [$request['new_customer_id'], $request['new_agent'], $request['new_expire_date'],
                 Auth::id(), Auth::id(),
                 null, null, null,
-                Carbon::now()->toDateTimeString(), $customers[0] -> name, Carbon::now()->toDateTimeString(),
+                Carbon::now()->toDateTimeString(), $customers[0]->name, Carbon::now()->toDateTimeString(),
                 Carbon::now()->toDateTimeString()]);
-        return redirect()->back() ->with('alert', 'success!!');
+        return redirect()->back()->with('alert', 'success!!');
     }
 
     /**
@@ -239,6 +238,9 @@ class LicenseController extends Controller
             'avatars/' . $id,
             file_get_contents($request->file('identity')->getRealPath())
         );
+
+        $licenses = DB::select('select * from licenses where id = ?', [$id]);
+
         $contents = Storage::get("avatars/$id");
         $temp = base64_decode(base64_decode($contents));
         $jStr = trim($temp, "# # # # # #");
@@ -254,24 +256,64 @@ class LicenseController extends Controller
         $MacAddress = self::rsaPrivateDecrypt($final['s']['c'], $privateKey);
         $linuxDateStr = new DateTime(self::rsaPrivateDecrypt($final['s']['d'], $privateKey));
 
-        if ($id != $cusId) {
-            return redirect()->back() ->with('alert', 'customerId is error!');
+        if ($licenses[0]->customer_id != $cusId) {
+            return redirect()->back()->with('alert', 'customerId is error!');
         }
 
         if ($request['upload_customer_id'] == $cusId) {
-            DB::update ('update licenses set `customer_id` = ?, `agent` = ?, `expire_date` = ?,
-                        `last_updated_user_id` = ?, `linux_info` = ?, `mac_address` = ?,
-                         `linux_date` = ? , `last_validate` = ? , `last_validate_ip` = ?
-                         , `updated_at` = ? '
-                , [$cusId, $agent, $expire,
-                    Auth::id(), $LinuxInfo, $MacAddress, $linuxDateStr,
-                    Carbon::now()->toDateTimeString(), $customerName, Carbon::now()->toDateTimeString()]);
-            return redirect()->back() ->with('alert', 'success!!');
+
+            DB::table('licenses')
+                ->where('id', $id)
+                ->update(['customer_id' => $cusId, 'agent' => $agent,
+                    'expire_date' => $expire, 'last_updated_user_id' => Auth::id(),
+                    'linux_info' => $LinuxInfo,'mac_address' => $MacAddress,'linux_date' => $linuxDateStr,
+                    'last_validate' => Carbon::now()->toDateTimeString(),'last_validate_ip' => $customerName
+                    ,'updated_at' => Carbon::now()->toDateTimeString()]);
+
+            return redirect()->back()->with('alert', 'success!!');
         } else {
-            return redirect()->back() ->with('alert', 'error!');
+            return redirect()->back()->with('alert', 'error!');
         }
 
     }
+
+    // 產生授權證書
+    public function generateLicense(Request $request, $id)
+    {
+
+        $file = public_path() . "/storage/app/rowave.license";
+        $headers = [
+            'Content-Type: application/pdf',
+        ];
+
+        $lis = DB::table('licenses')
+            ->join('customers', 'licenses.customer_id', '=', 'customers.id')
+            ->select('licenses.*', 'customers.name')
+            ->where('licenses.id', '=', $id)
+            ->get();
+
+        // put contenxt
+        $pKey = self::loadPubKey();
+        $s = new S(array('b' => self::rsaPubEncrypt($lis[0]->linux_info, $pKey),
+            'c' => self::rsaPubEncrypt($lis[0]->mac_address, $pKey),
+            'd' => self::rsaPubEncrypt($lis[0]->linux_date, $pKey)));
+        $l = new L(array('agent' => self::rsaPubEncrypt($lis[0]->agent, $pKey),
+            'expire' => self::rsaPubEncrypt($lis[0]->expire_date, $pKey),
+            'customerId' => self::rsaPubEncrypt($lis[0]->customer_id, $pKey),
+            'licenseId' => self::rsaPubEncrypt($lis[0]->id, $pKey),
+            'customerName' => self::rsaPubEncrypt($lis[0]->name, $pKey)));
+        $final = new Key(array('l' => $l, 's' => $s));
+
+        $contents = base64_encode(base64_encode(json_encode(($final))));
+        Storage::put(
+            'rowave.license',
+            $contents
+        );
+
+        return response()->download('../storage/app/rowave.license', 'rowave.license', $headers);
+    }
+
+    //========================================================================================================================
 
     // load private key
     public function loadPrivateKey($path)
@@ -292,30 +334,33 @@ class LicenseController extends Controller
         return $decrypt;
     }
 
-
-    // 產生授權證書
-    public function generateLicense (Request $request){
-
-        $file= public_path(). "/storage/app/rowave.license";
-        $headers = [
-            'Content-Type: application/pdf',
-        ];
-
-        // put contenxt
-        $tem = new S(array('b' => 1, 'c' => 'Amir', 'd' => '13'));
-        $tem1 = new L(array('agent' => 31, 'expire' => 32,'customerId' => 33,'licenseId' => 34,'customerName' => 35));
-        $fi = new Key(array('l' => $tem1, 's' => $tem));
-//        var_dump($tem);
-        echo (json_encode(($fi)));
-//        $contents = "123";
-//        Storage::put(
-//            'avatars/file.txt',
-//            $contents
-//        );
-//
-//        return response()->download('../storage/app/rowave.license', 'rowave.license', $headers);
-
+    // 讀取公鑰
+    public function loadPubKey($path = "../pub.pem")
+    {
+        $fp = fopen($path, 'r');
+        $key = fread($fp, 8192);
+        if (stripos($key, "BEGIN PUBLIC KEY") == false) {
+            $key = "-----BEGIN PUBLIC KEY-----\n" . $key;
+        }
+        if (stripos($key, "END PUBLIC KEY") == false) {
+            $key = $key . "\n-----END PUBLIC KEY-----";
+        }
+        fclose($fp);
+        return $key;
     }
 
+    // 公鑰加密 所有欄位
+    public function rsaPubDecrypt($encrypt, $key)
+    {
+        $encrypt = base64_decode($encrypt);
+        openssl_public_decrypt($encrypt, $decrypt, $key);
+        return $decrypt;
+    }
+
+    public function rsaPubEncrypt($source, $key)
+    {
+        openssl_public_encrypt($source, $encrypt, $key);
+        return base64_encode($encrypt);
+    }
 
 }
