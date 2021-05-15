@@ -42,11 +42,22 @@ class LicenseController extends Controller
      * Store a newly created resource in storage.
      *
      * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function store(Request $request)
     {
-        //
+        $customers = DB::select('select * from customers where id = ?', [$request['new_customer_id']]);
+
+        if ($customers == null || $customers == "" ) return redirect()->back() ->with('alert', 'new_customer_id error!!');
+        DB::insert('insert into licenses (customer_id, agent, expire_date, created_user_id, last_updated_user_id,
+                        linux_info, mac_address, linux_date, last_validate, last_validate_ip, created_at, updated_at)
+                        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+            , [$request['new_customer_id'], $request['new_agent'], $request['new_expire_date'],
+                Auth::id(), Auth::id(),
+                null, null, null,
+                Carbon::now()->toDateTimeString(), $customers[0] -> name, Carbon::now()->toDateTimeString(),
+                Carbon::now()->toDateTimeString()]);
+        return redirect()->back() ->with('alert', 'success!!');
     }
 
     /**
@@ -235,25 +246,28 @@ class LicenseController extends Controller
         $cusId = self::rsaPrivateDecrypt($final['l']['customerId'], $privateKey);
         $agent = self::rsaPrivateDecrypt($final['l']['agent'], $privateKey);
         $expire = self::rsaPrivateDecrypt($final['l']['expire'], $privateKey);
-        $licenseId = self::rsaPrivateDecrypt($final['l']['licenseId'], $privateKey);
         $customerName = self::rsaPrivateDecrypt($final['l']['customerName'], $privateKey);
         $LinuxInfo = self::rsaPrivateDecrypt($final['s']['b'], $privateKey);
         $MacAddress = self::rsaPrivateDecrypt($final['s']['c'], $privateKey);
         $linuxDateStr = new DateTime(self::rsaPrivateDecrypt($final['s']['d'], $privateKey));
 
+        if ($id != $cusId) {
+            return redirect()->back() ->with('alert', 'customerId is error!');
+        }
+
         if ($request['upload_customer_id'] == $cusId) {
-            DB::insert('insert into licenses (customer_id, agent, expire_date, created_user_id, last_updated_user_id,
-                        linux_info, mac_address, linux_date, last_validate, last_validate_ip, created_at, updated_at)
-                        values (?, ?, ?,?, ?, ?,?, ?, ?,?, ?, ?)'
+            DB::update ('update licenses set `customer_id` = ?, `agent` = ?, `expire_date` = ?,
+                        `last_updated_user_id` = ?, `linux_info` = ?, `mac_address` = ?,
+                         `linux_date` = ? , `last_validate` = ? , `last_validate_ip` = ?
+                         , `updated_at` = ? '
                 , [$cusId, $agent, $expire,
-                    Auth::id(), Auth::id(),
-                    $LinuxInfo, $MacAddress, $linuxDateStr,
-                    Carbon::now()->toDateTimeString(), $customerName, Carbon::now()->toDateTimeString(),
-                    Carbon::now()->toDateTimeString()]);
+                    Auth::id(), $LinuxInfo, $MacAddress, $linuxDateStr,
+                    Carbon::now()->toDateTimeString(), $customerName, Carbon::now()->toDateTimeString()]);
             return redirect()->back() ->with('alert', 'success!!');
         } else {
             return redirect()->back() ->with('alert', 'error!');
         }
+
     }
 
     // load private key
