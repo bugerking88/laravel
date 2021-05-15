@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Key;
+use App\Models\L;
+use App\Models\S;
 use Carbon\Carbon;
 use DateTime;
 use Illuminate\Http\Request;
@@ -206,7 +209,7 @@ class LicenseController extends Controller
                                 <input type=\"button\" class=\"page-btn btn-success\" id=\"btnUpload\" value=\"上傳\"
                                 data-item-id =\"$li->id\" onclick=\"identityUpload($li->id,$li->customer_id)\">
                                 <input type=\"button\" class=\"page-btn btn-primary\" id=\"edit-item\" value=\"編輯\"
-                                data-item-id =\"$li->id\"> <a href=\"$url/generate-license/$li->id\"
+                                data-item-id =\"$li->id\"> <a href=\"/generate-license/$li->id\"
                                  class=\"page-btn btn-dark\" id=\"generateLicense\" data-item-id =\"$li->id\"> 產生授權證書</a>",
             ];
 
@@ -280,12 +283,38 @@ class LicenseController extends Controller
     }
 
 
+    // 私鑰解密
     public function rsaPrivateDecrypt($encrypt, $privateKey)
     {
         $encrypt = base64_decode($encrypt);
         openssl_private_decrypt($encrypt, $decrypt, $privateKey);
 
         return $decrypt;
+    }
+
+
+    // 產生授權證書
+    public function generateLicense (Request $request){
+
+        $file= public_path(). "/storage/app/rowave.license";
+        $headers = [
+            'Content-Type: application/pdf',
+        ];
+
+        // put contenxt
+        $tem = new S(array('b' => 1, 'c' => 'Amir', 'd' => '13'));
+        $tem1 = new L(array('agent' => 31, 'expire' => 32,'customerId' => 33,'licenseId' => 34,'customerName' => 35));
+        $fi = new Key(array('l' => $tem1, 's' => $tem));
+//        var_dump($tem);
+        echo (json_encode(($fi)));
+//        $contents = "123";
+//        Storage::put(
+//            'avatars/file.txt',
+//            $contents
+//        );
+//
+//        return response()->download('../storage/app/rowave.license', 'rowave.license', $headers);
+
     }
 
 
