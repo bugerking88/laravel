@@ -30,6 +30,8 @@
     @endif
     <div class="text-right">
         <button type="button" class="btn btn-primary btn-icon-split" data-toggle="modal" data-target="#createModal"> {{__('新增授權證書')}} </button>
+        <input type="button" class="page-btn btn-success" id="btnUploadKeys" value="外部上傳"
+               onclick="identityUploadOut()">
     </div>
     <br/>
     <div class="card">

@@ -87,3 +87,15 @@ function identityUpload(id,customer_id) {
     $("#uploadForm").attr("action",url);
     $('#uploadModal').modal(options);
 }
+
+function identityUploadOut() {
+    var options = {
+        'backdrop': 'static'
+    };
+    var url = "/licenseservice/getLicenseStatus";
+    // $("#upload_customer_id").val(customer_id);
+    // fill the data in the input fields
+    $("#uploadForm").attr("action",url);
+    $('#uploadModal').modal(options);
+}
+

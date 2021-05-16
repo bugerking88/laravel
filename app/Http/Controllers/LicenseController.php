@@ -313,6 +313,69 @@ class LicenseController extends Controller
         return response()->download('../storage/app/rowave.license', 'rowave.license', $headers);
     }
 
+    public function getLicenseStatus(Request $request){
+        $contents = file_get_contents($request->file('identity')->getRealPath());
+        if ($contents == null){
+            $data = [
+                "success" => "false",
+                "msg" => "File error!"
+            ];
+
+            return response()->json($data);
+        }
+
+        $temp = base64_decode(base64_decode($contents));
+        $jStr = trim($temp, "# # # # # #");
+        $final = json_decode($jStr, true);
+
+        $privateKey = self::loadPrivateKey("../private1.key");
+        $licenseId = self::rsaPrivateDecrypt($final['l']['licenseId'], $privateKey);
+        $license_key = self::rsaPrivateDecrypt($final['s']['license_key'], $privateKey);
+        $note = self::rsaPrivateDecrypt($final['s']['note'], $privateKey);
+        $customer_id = self::rsaPrivateDecrypt($final['s']['customer_id'], $privateKey);
+        $ip = self::rsaPrivateDecrypt($final['s']['ip'], $privateKey);
+
+        // 檢核
+        $licenses = DB::select('select * from licenses where id = ?', [$licenseId]);
+        if ($licenses == null){
+            $data = [
+                "success" => "false",
+                "msg" => "licenseId not exist!!"
+            ];
+
+            return response()->json($data);
+        }
+
+        if ($license_key == null || $customer_id == null ){
+            $data = [
+                "success" => "false",
+                "msg" => "license_key or customer_id is necessary"
+            ];
+
+            return response()->json($data);
+        }
+        $tag = DB::insert('insert into keys (license_key, note, customer_id, ip, created_at, updated_at)
+                        values (?, ?, ?, ?, ?, ?)'
+            , [$license_key, $note, $customer_id,
+                $ip, Carbon::now()->toDateTimeString(), Carbon::now()->toDateTimeString()]);
+
+        if ($tag) {
+            $data = [
+                "success" => "true",
+                "msg" => "success"
+            ];
+
+            return response()->json($data);
+        } else {
+            $data = [
+                "success" => "false",
+                "msg" => "Insert database error!"
+            ];
+
+            return response()->json($data);
+        }
+
+    }
     //========================================================================================================================
 
     // load private key

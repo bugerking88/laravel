@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return redirect('/login');
 });
-//Route::post('/licenseservice/getLicenseStatus', 'LicenseController@getLicenseStatus');
+Route::post('/licenseservice/getLicenseStatus', 'App\Http\Controllers\LicenseController@getLicenseStatus');
 
 Auth::routes();
 Route::group(['middleware' => ['auth']], function () {
@@ -30,7 +30,3 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('/generate-license/{id}', 'App\Http\Controllers\LicenseController@generateLicense')->name('generate_license');
     Route::post('/identity-upload/{id}', 'App\Http\Controllers\LicenseController@identityUpload')->name('identity_upload');
 });
-
-//Auth::routes();
-//
-//Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
