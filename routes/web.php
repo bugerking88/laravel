@@ -15,7 +15,9 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return redirect('/login');
 });
+
 Route::post('/licenseservice/getLicenseStatus', 'App\Http\Controllers\LicenseController@getLicenseStatus');
+Route::get('/csrf', 'App\Http\Controllers\LicenseController@csrf');
 
 Auth::routes();
 Route::group(['middleware' => ['auth']], function () {

@@ -266,9 +266,9 @@ class LicenseController extends Controller
                 ->where('id', $id)
                 ->update(['customer_id' => $cusId, 'agent' => $agent,
                     'expire_date' => $expire, 'last_updated_user_id' => Auth::id(),
-                    'linux_info' => $LinuxInfo,'mac_address' => $MacAddress,'linux_date' => $linuxDateStr,
-                    'last_validate' => Carbon::now()->toDateTimeString(),'last_validate_ip' => $customerName
-                    ,'updated_at' => Carbon::now()->toDateTimeString()]);
+                    'linux_info' => $LinuxInfo, 'mac_address' => $MacAddress, 'linux_date' => $linuxDateStr,
+                    'last_validate' => Carbon::now()->toDateTimeString(), 'last_validate_ip' => $customerName
+                    , 'updated_at' => Carbon::now()->toDateTimeString()]);
 
             return redirect()->back()->with('alert', 'success!!');
         } else {
@@ -313,9 +313,10 @@ class LicenseController extends Controller
         return response()->download('../storage/app/rowave.license', 'rowave.license', $headers);
     }
 
-    public function getLicenseStatus(Request $request){
-        $contents = file_get_contents($request->file('identity')->getRealPath());
-        if ($contents == null){
+    public function getLicenseStatus(Request $request)
+    {
+        $contents = $request->getContent();
+        if ($contents == null) {
             $data = [
                 "success" => "false",
                 "msg" => "File error!"
@@ -324,20 +325,17 @@ class LicenseController extends Controller
             return response()->json($data);
         }
 
-        $temp = base64_decode(base64_decode($contents));
+        $temp = base64_decode($contents);
         $jStr = trim($temp, "# # # # # #");
         $final = json_decode($jStr, true);
 
         $privateKey = self::loadPrivateKey("../private1.key");
-        $licenseId = self::rsaPrivateDecrypt($final['l']['licenseId'], $privateKey);
-        $license_key = self::rsaPrivateDecrypt($final['s']['license_key'], $privateKey);
-        $note = self::rsaPrivateDecrypt($final['s']['note'], $privateKey);
-        $customer_id = self::rsaPrivateDecrypt($final['s']['customer_id'], $privateKey);
-        $ip = self::rsaPrivateDecrypt($final['s']['ip'], $privateKey);
+        $licenseId = self::rsaPrivateDecrypt($final['license']['licenseId'], $privateKey);
+        $customer_id = self::rsaPrivateDecrypt($final['license']['customerId'], $privateKey);
 
         // 檢核
         $licenses = DB::select('select * from licenses where id = ?', [$licenseId]);
-        if ($licenses == null){
+        if ($licenses == null) {
             $data = [
                 "success" => "false",
                 "msg" => "licenseId not exist!!"
@@ -346,7 +344,7 @@ class LicenseController extends Controller
             return response()->json($data);
         }
 
-        if ($license_key == null || $customer_id == null ){
+        if ($final['key'] == null || $customer_id == null) {
             $data = [
                 "success" => "false",
                 "msg" => "license_key or customer_id is necessary"
@@ -354,10 +352,10 @@ class LicenseController extends Controller
 
             return response()->json($data);
         }
-        $tag = DB::insert('insert into keys (license_key, note, customer_id, ip, created_at, updated_at)
-                        values (?, ?, ?, ?, ?, ?)'
-            , [$license_key, $note, $customer_id,
-                $ip, Carbon::now()->toDateTimeString(), Carbon::now()->toDateTimeString()]);
+
+        $tag = DB::insert('insert into `keys` (license_key, customer_id, ip, created_at, updated_at) values (?, ?, ?, ?, ?)'
+            , [$final['key'], $customer_id,
+                $request->ip(), Carbon::now()->toDateTimeString(), Carbon::now()->toDateTimeString()]);
 
         if ($tag) {
             $data = [
@@ -397,6 +395,13 @@ class LicenseController extends Controller
         return $decrypt;
     }
 
+    public function rsaPrivateDecryptOnlyKey($encrypt, $privateKey)
+    {
+        openssl_private_decrypt($encrypt, $decrypt, $privateKey);
+
+        return $decrypt;
+    }
+
     // 讀取公鑰
     public function loadPubKey($path = "../pub.pem")
     {
@@ -424,6 +429,11 @@ class LicenseController extends Controller
     {
         openssl_public_encrypt($source, $encrypt, $key);
         return base64_encode($encrypt);
+    }
+
+    public function csrf(Request $request)
+    {
+        echo csrf_token();
     }
 
 }
